@@ -148,13 +148,6 @@ app.post("/", async (req, res) => {
           res.send(msg);
 
           //KYC USER
-          // let merchantcode = '9182506466';
-          // let countryCode = 'KE';
-          // let kycData = {
-          //   merchantcode, documentType, documentNumber, firstname, lastname, dateofbirth, countryCode
-          // };
-          // console.log('KYC DATA:=> ',JSON.stringify(kycData));
-          // console.log('ID From Jenga: ',kycData.identity.additionalIdentityDetails[0].documentNumber )
           try{
             let kycdata = {
               "documentType" : documentType,
@@ -222,7 +215,6 @@ app.post("/", async (req, res) => {
     } else if ( data[0] == '1' && data[1] == '1' && data[2] !== '' && data[3] !== '' ) {//  TRANSFER && PHONENUMBER && AMOUNT
       senderMSISDN = phoneNumber.substring(1);
       let receiverMSISDN;
-      // console.log('sender: ', senderMSISDN);
       try { receiverMSISDN = phoneUtil.format(phoneUtil.parseAndKeepRawInput(`${data[2]}`, 'KE'), PNF.E164) } catch (e) { console.log(e) }
 
       receiverMSISDN = receiverMSISDN.substring(1);  
@@ -230,12 +222,9 @@ app.post("/", async (req, res) => {
       let cusdAmount = parseFloat(amount);
       cusdAmount = cusdAmount*0.0091;
       let senderId = await getSenderId(senderMSISDN)
-      // console.log('senderId: ', senderId);
       let recipientId = await getRecipientId(receiverMSISDN)
-      // console.log('recipientId: ', recipientId);
 
       let recipientstatusresult = await checkIfRecipientExists(recipientId);
-      // console.log("Recipient Exists? ",recipientstatusresult);
       if(recipientstatusresult == false){ 
         let recipientUserId = await createNewUser(recipientId, receiverMSISDN); 
         console.log('New Recipient', recipientUserId);
@@ -243,7 +232,6 @@ app.post("/", async (req, res) => {
       
       // Retrieve User Blockchain Data
       let senderInfo = await getSenderDetails(senderId);
-      // console.log('Sender Info: ', JSON.stringify(senderInfo.data()))
       let senderprivkey = await getSenderPrivateKey(senderInfo.data().seedKey, senderMSISDN, iv)
 
       let receiverInfo = await getReceiverDetails(recipientId);
@@ -295,46 +283,11 @@ app.post("/", async (req, res) => {
         
     } else if ( data[0] == '1' && data[1] == '2' && data[2] !== '' && data[3] !== '' ) {//  TRANSFER && ADDRESS && AMOUNT
       let senderMSISDN = phoneNumber.substring(1);
-      // console.log('sender: ', senderMSISDN);
-      //try { receiverMSISDN = phoneUtil.format(phoneUtil.parseAndKeepRawInput(`${data[1]}`, 'KE'), PNF.E164) } catch (e) { console.log(e) }
-
       let receiverAddress = `${data[1]}`; 
       let amount = data[3];
-      let cusdAmount = parseFloat(amount);
-      cusdAmount = cusdAmount*0.0091;
       let senderId = await getSenderId(senderMSISDN)
-      // console.log('senderId: ', senderId);
-      // recipientId = await getRecipientId(receiverMSISDN)
-      // console.log('recipientId: ', recipientId);
-
-      // let recipientstatusresult = await checkIfRecipientExists(recipientId);
-      // console.log("Recipient Exists? ",recipientstatusresult);
-      // if(recipientstatusresult == false){ 
-      //   let recipientUserId = await createNewUser(recipientId, receiverMSISDN); 
-      //   console.log('New Recipient', recipientUserId);
-      // }  
-      
-      // Retrieve User Blockchain Data
       let senderInfo = await getSenderDetails(senderId);
-      // console.log('Sender Info: ', JSON.stringify(senderInfo.data()))
-      let senderprivkey = await getSenderPrivateKey(senderInfo.data().seedKey, senderMSISDN, iv)
-
-      // let receiverInfo = await getReceiverDetails(recipientId);
-      // while (receiverInfo.data() === undefined || receiverInfo.data() === null || receiverInfo.data() === ''){
-      //   await sleep(1000);
-      //   receiverInfo = await getReceiverDetails(recipientId);
-      //   // console.log('Receiver:', receiverInfo.data());
-      // }
-
-      let senderName = '';
-      await admin.auth().getUser(senderId).then(user => { senderName = user.displayName; return; }).catch(e => {console.log(e)})  
-      console.log('Sender fullName: ', senderName);
-
-      // let receiverName = '';
-      // await admin.auth().getUser(recipientId).then(user => { receiverName = user.displayName; return; }).catch(e => {console.log(e)})  
-      // console.log('Receiver fullName: ', receiverName);
-      // let _receiver = '';
-      
+      let senderprivkey = await getSenderPrivateKey(senderInfo.data().seedKey, senderMSISDN, iv)      
 
       let receipt = await sendcUSD(senderInfo.data().publicAddress, receiverAddress, cusdAmount, senderprivkey);
       if(receipt === 'failed'){
@@ -343,17 +296,13 @@ app.post("/", async (req, res) => {
         return;
       }
 
-      // if(receiverName==undefined || receiverName==''){_receiver=receiverMSISDN; } else{ _receiver=receiverName;}
-
       let url = await getTxidUrl(receipt.transactionHash);
       let message2sender = `KES ${amount}  sent to ${receiverAddress}.\nTransaction URL:  ${url}`;
-      // let message2receiver = `You have received KES ${amount} from ${senderName}.\nTransaction Link:  ${url}`;
       console.log('tx URL', url);
       msg = `END KES ${amount} sent to ${_receiver}. \nTransaction Details: ${url}`;  
       res.send(msg);
 
-      sendMessage("+"+senderMSISDN, message2sender);
-      // sendMessage("+"+receiverMSISDN, message2receiver);        
+      sendMessage("+"+senderMSISDN, message2sender);      
     }
     
 
@@ -371,7 +320,7 @@ app.post("/", async (req, res) => {
       res.send(msg);
     }
     
-    //CELO TRADING
+    //KES TRADING
     else if ( data[0] == '5' && data[1] == '1' && data[2] == null) {
         let userMSISDN = phoneNumber.substring(1);      
         msg = 'CON Choose CELO Option:';
@@ -436,7 +385,7 @@ app.post("/", async (req, res) => {
       msg += footer;   
       res.send(msg);     
     }
-    //1. Get ICX Current Price
+    //1. Get XLM Current Price
     else if ( data[0] == '5'  && data[1] == '4' && data[2] == '1' ) {
       let userMSISDN = phoneNumber.substring(1);
 
@@ -447,7 +396,7 @@ app.post("/", async (req, res) => {
       msg += footer;
       res.send(msg);
     }
-    //2. Market Buy ICX
+    //2. Market Buy XLM
     else if ( data[0] == '5'  && data[1] == '4' && data[2] == '2' && data[3] == null ) {
       let userMSISDN = phoneNumber.substring(1);
 
@@ -466,7 +415,7 @@ app.post("/", async (req, res) => {
       msg += footer;
       res.send(msg);
     }
-    //3. Limit Buy ICX
+    //3. Limit Buy XLM
     else if ( data[0] == '5'  && data[1] == '4' && data[2] == '3' && data[3] == null ) {
       let userMSISDN = phoneNumber.substring(1);
 
