@@ -24,7 +24,7 @@ const PNF = require('google-libphonenumber').PhoneNumberFormat;
  const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
 
 
-var { getTxidUrl, getDeepLinkUrl, getAddressUrl, getPinFromUser, getEncryptKey, createcypher, decryptcypher, sendMessage, sendGmail, emailIsValid, isDobValid, isValidKePhoneNumber } = require('./utilities');
+var { getTxidUrl, getPinFromUser, createcypher, sendMessage, sendGmail } = require('./utilities');
 
 //GLOBAL ENV VARIABLES
 const iv = functions.config().env.crypto_iv.key;
@@ -34,7 +34,7 @@ const escrowMSISDN = functions.config().env.escrow.msisdn;
 
 //@task imports from celokit
 
-const {  getPublicAddress, generatePrivKey, weiToDecimal, decimaltoWei, sendcUSD, checkIfBeneficiary, checkUbiScBalance, sendUBIClaim, buyCelo, sellCelo, getContractKit,  getLatestBlock, validateWithdrawHash } = require('./celokit');
+const {  sendcUSD,  } = require('./celokit');
 const { getIcxUsdtPrice } = require('./iconnect');
 
 // USSD API 
@@ -248,17 +248,21 @@ app.post("/", async (req, res) => {
       let receiverName = '';
       await admin.auth().getUser(recipientId).then(user => { receiverName = user.displayName; return; }).catch(e => {console.log(e)})  
       console.log('Receiver fullName: ', receiverName);
-      let _receiver = '';
+
+      // if(receiverName==undefined || receiverName==''){_receiver=receiverMSISDN; } else{ _receiver=receiverName;}
+      let _receiver = await getReceiverName(receiverMSISDN);
       
 
-      let receipt = await sendcUSD(senderInfo.data().publicAddress, receiverInfo.data().publicAddress, cusdAmount, senderprivkey);
+      const [pairA, pairB] = [{address: senderAddress, secret: senderprivkey}, {address: receiverAddress, secret: receiverPrivkey}];  
+      let receipt = transferFunds(pairA, pairB, Stellar.Asset.native(), amount).then(() => console.log("ok")).catch(e => { console.error(e);  throw e; });
+
       if(receipt === 'failed'){
         msg = `END Your transaction has failed due to insufficient balance`;  
         res.send(msg);
         return;
       }
 
-      if(receiverName==undefined || receiverName==''){_receiver=receiverMSISDN; } else{ _receiver=receiverName;}
+      
 
       let url = await getTxidUrl(receipt.transactionHash);
       let message2sender = `KES ${amount}  sent to ${_receiver}.\nTransaction URL:  ${url}`;
@@ -287,9 +291,11 @@ app.post("/", async (req, res) => {
       let amount = data[3];
       let senderId = await getSenderId(senderMSISDN)
       let senderInfo = await getSenderDetails(senderId);
-      let senderprivkey = await getSenderPrivateKey(senderInfo.data().seedKey, senderMSISDN, iv)      
+      let senderprivkey = await getSenderPrivateKey(senderInfo.data().seedKey, senderMSISDN, iv)  
+      
+      const [pairA, pairB] = [{address: senderAddress, secret: senderprivkey}, {address: receiverAddress, secret: receiverPrivkey}];  
+      let receipt = transferFunds(pairA, pairB, Stellar.Asset.native(), amount).then(() => console.log("ok")).catch(e => { console.error(e);  throw e; });
 
-      let receipt = await sendcUSD(senderInfo.data().publicAddress, receiverAddress, cusdAmount, senderprivkey);
       if(receipt === 'failed'){
         msg = `END Your transaction has failed due to insufficient balance`;  
         res.send(msg);
