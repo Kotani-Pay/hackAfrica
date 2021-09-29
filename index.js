@@ -164,7 +164,7 @@ app.post("/", async (req, res) => {
             //save KYC data to KYC DB
             let newkycdata = await addUserKycToDB(userId, kycdata);
             await admin.auth().setCustomUserClaims(userId, {verifieduser: true})
-            let message2sender = `Welcome to Kotanipay.\nYour account details have been verified.\nDial *483*354# to access the KotaniPay Ecosystem.\nUser PIN: ${newUserPin}`;
+            let message2sender = `Welcome to Kotani Pay.\nYour account details have been verified.\nDial *483*354# to access the service.\nUser PIN: ${newUserPin}`;
             sendMessage("+"+userMSISDN, message2sender);
 
 
@@ -182,16 +182,16 @@ app.post("/", async (req, res) => {
           return;
         }
       }else if ( data[0] !== '' && data[1] !== '' && data[2] !== ''  && data[3] !== ''  && data[4] !== '' && data[5] !== '' && data[6] !== ''  && data[7] !== '' && data[8] == '2'){
-        msg = `END Accept the terms & conditions to access KotaniPay Services`;
+        msg = `END Accept the terms & conditions to access Kotani Pay services`;
         res.send(msg);
         return;
       }
     }    
 
     else if (text === '' ) {
-      msg = 'CON Welcome to Kotanipay:';
+      msg = 'CON Welcome to Kotani Pay:';
       msg += '\n1: Send Money';
-      msg += '\n5: Kotani Dex';
+      msg += '\n5: Kotani DEx';
       msg += '\n7: My Account';
       res.send(msg);
     }     
@@ -458,7 +458,7 @@ app.post("/", async (req, res) => {
       // Business logic for first level msg
       msg = `CON Choose account information you want to view`;
       msg += `\n1. Account Details`;
-      msg += `\n2. Account balance`;
+      msg += `\n2. Account Balance`;
       msg += `\n3. Account Backup`;
       msg += `\n4. PIN Reset`
       msg += footer;
@@ -491,7 +491,7 @@ app.post("/", async (req, res) => {
           "user": functions.config().env.gmail.user,
           "pass": functions.config().env.gmail.pass,
           "to": userEmail,
-          "subject": "KotaniPay PIN"
+          "subject": "Kotani Pay PIN"
         }
         sendGmail(gmailSendOptions, message);
         msg = `END Password reset was successful.\n Kindly check ${userEmail} for Details`; 
@@ -508,7 +508,7 @@ app.post("/", async (req, res) => {
       msg = `CON Sorry, I dont understand your option`;
       msg += 'SELECT:';
       msg += '\n1: Send Money';
-      msg += '\n5: Kotani Dex';
+      msg += '\n5: Kotani DEx';
       msg += '\n7: My Account';
       res.send(msg);
     } 
